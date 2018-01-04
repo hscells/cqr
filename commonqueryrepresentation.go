@@ -1,6 +1,11 @@
 // Package cqr provides a common query representation for keyword and Boolean queries in go.
 package cqr
 
+import (
+	"fmt"
+	"strings"
+)
+
 // CommonQueryRepresentation is the parent type for all subtypes.
 type CommonQueryRepresentation interface {
 	String() string
@@ -24,12 +29,17 @@ type BooleanQuery struct {
 
 // String computes the string representation of a keyword.
 func (k Keyword) String() string {
-	return k.QueryString
+	return fmt.Sprintf("`%v`%v[%v]", k.QueryString, k.Fields, k.Options)
 }
 
 // String computes the string representation of a Boolean query.
-func (b BooleanQuery) String() string {
-	return b.Operator
+func (b BooleanQuery) String() (s string) {
+	s += fmt.Sprintf(" ( %v", b.Operator)
+	for _, child := range b.Children {
+		s += fmt.Sprintf(" %v", child.String())
+	}
+	s += ") "
+	return strings.TrimSpace(s)
 }
 
 // SetOption sets an optional parameter on the keyword.
