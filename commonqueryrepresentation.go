@@ -34,7 +34,7 @@ func (k Keyword) String() string {
 
 // String computes the string representation of a Boolean query.
 func (b BooleanQuery) String() (s string) {
-	s += fmt.Sprintf(" ( %v", b.Operator)
+	s += fmt.Sprintf(" ( %v[%v]", b.Operator, b.Options)
 	for _, child := range b.Children {
 		s += fmt.Sprintf(" %v", child.String())
 	}
