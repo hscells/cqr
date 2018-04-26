@@ -4,11 +4,13 @@ package cqr
 import (
 	"fmt"
 	"strings"
+	"sort"
 )
 
 // CommonQueryRepresentation is the parent type for all subtypes.
 type CommonQueryRepresentation interface {
 	String() string
+	StringPretty() string
 	GetOption(string) interface{}
 	SetOption(string, interface{}) CommonQueryRepresentation
 }
@@ -29,7 +31,18 @@ type BooleanQuery struct {
 
 // String computes the string representation of a keyword.
 func (k Keyword) String() string {
-	return fmt.Sprintf("`%v`%v[%v]", k.QueryString, k.Fields, k.Options)
+	s := make([]string, len(k.Options))
+	i := 0
+	for k, v := range k.Options {
+		s[i] = fmt.Sprintf("%v:%v", k, v)
+		i++
+	}
+	sort.Strings(s)
+	return fmt.Sprintf("%v %v {%v}", k.QueryString, k.Fields, strings.Join(s, " "))
+}
+
+func (k Keyword) StringPretty() string {
+	return k.QueryString
 }
 
 // String computes the string representation of a Boolean query.
@@ -40,6 +53,11 @@ func (b BooleanQuery) String() (s string) {
 	}
 	s += ") "
 	return strings.TrimSpace(s)
+}
+
+// String computes the string representation of a Boolean query.
+func (b BooleanQuery) StringPretty() (s string) {
+	return b.Operator
 }
 
 // SetOption sets an optional parameter on the keyword.
@@ -80,4 +98,21 @@ func NewBooleanQuery(operator string, children []CommonQueryRepresentation) Bool
 		Children: children,
 		Options:  map[string]interface{}{},
 	}
+}
+
+func IsBoolean(query CommonQueryRepresentation) bool {
+	if _, ok := query.(BooleanQuery); ok {
+		return true
+	}
+	return false
+}
+
+func CopyKeyword(query Keyword) Keyword {
+	fields := make([]string, len(query.Fields))
+	copy(fields, query.Fields)
+	nq := NewKeyword(query.QueryString, fields...)
+	for k, v := range query.Options {
+		nq.Options[k] = v
+	}
+	return nq
 }
