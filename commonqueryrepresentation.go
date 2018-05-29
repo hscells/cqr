@@ -7,6 +7,16 @@ import (
 	"sort"
 )
 
+var (
+	ExplodedString  = "exploded"
+	TruncatedString = "truncated"
+	AND             = "and"
+	OR              = "or"
+	NOT             = "not"
+
+	options = []string{ExplodedString, TruncatedString}
+)
+
 // CommonQueryRepresentation is the parent type for all subtypes.
 type CommonQueryRepresentation interface {
 	String() string
@@ -31,6 +41,12 @@ type BooleanQuery struct {
 
 // String computes the string representation of a keyword.
 func (k Keyword) String() string {
+	// This ensures that all queries hash to the same value.
+	for _, option := range options {
+		if _, ok := k.Options[option]; !ok {
+			k.Options[option] = false
+		}
+	}
 	s := make([]string, len(k.Options))
 	i := 0
 	for k, v := range k.Options {
