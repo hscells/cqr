@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sort"
+	"sync"
 )
 
 var (
@@ -15,6 +16,8 @@ var (
 	NOT             = "not"
 
 	options = []string{ExplodedString, TruncatedString}
+
+	mu sync.Mutex
 )
 
 // CommonQueryRepresentation is the parent type for all subtypes.
@@ -42,11 +45,13 @@ type BooleanQuery struct {
 // String computes the string representation of a keyword.
 func (k Keyword) String() string {
 	// This ensures that all queries hash to the same value.
+	mu.Lock()
 	for _, option := range options {
 		if _, ok := k.Options[option]; !ok {
 			k.Options[option] = false
 		}
 	}
+	mu.Unlock()
 	s := make([]string, len(k.Options))
 	i := 0
 	for k, v := range k.Options {
@@ -127,8 +132,10 @@ func CopyKeyword(query Keyword) Keyword {
 	fields := make([]string, len(query.Fields))
 	copy(fields, query.Fields)
 	nq := NewKeyword(query.QueryString, fields...)
+	mu.Lock()
 	for k, v := range query.Options {
 		nq.Options[k] = v
 	}
+	mu.Unlock()
 	return nq
 }
