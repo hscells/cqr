@@ -3,8 +3,8 @@ package cqr
 
 import (
 	"fmt"
-	"strings"
 	"sort"
+	"strings"
 	"sync"
 )
 
@@ -14,8 +14,6 @@ var (
 	AND             = "and"
 	OR              = "or"
 	NOT             = "not"
-
-	options = []string{ExplodedString, TruncatedString}
 
 	mu sync.Mutex
 )
@@ -44,14 +42,6 @@ type BooleanQuery struct {
 
 // String computes the string representation of a keyword.
 func (k Keyword) String() string {
-	// This ensures that all queries hash to the same value.
-	mu.Lock()
-	for _, option := range options {
-		if _, ok := k.Options[option]; !ok {
-			k.Options[option] = false
-		}
-	}
-	mu.Unlock()
 	s := make([]string, len(k.Options))
 	i := 0
 	for k, v := range k.Options {
@@ -68,9 +58,21 @@ func (k Keyword) StringPretty() string {
 
 // String computes the string representation of a Boolean query.
 func (b BooleanQuery) String() (s string) {
-	s += fmt.Sprintf(" ( %v[%v]", b.Operator, b.Options)
-	for _, child := range b.Children {
-		s += fmt.Sprintf(" %v", child.String())
+	x := make([]string, len(b.Options))
+	i := 0
+	for k, v := range b.Options {
+		x[i] = fmt.Sprintf("%v:%v", k, v)
+		i++
+	}
+	sort.Strings(x)
+	y := make([]string, len(b.Children))
+	for i, child := range b.Children {
+		y[i] = child.String()
+	}
+	sort.Strings(y)
+	s += fmt.Sprintf(" ( %v[%v]", b.Operator, x)
+	for _, child := range y {
+		s += fmt.Sprintf(" %v", child)
 	}
 	s += ") "
 	return strings.TrimSpace(s)
